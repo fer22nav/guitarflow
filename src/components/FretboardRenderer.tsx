@@ -97,26 +97,6 @@ export function Board({
       ))}
       {tuning.map((t, s) => (
         <g key={s}>
-          <text
-            x="27"
-            y={STRING_Y(s) + 5}
-            textAnchor="middle"
-            fill="#d0d0ca"
-            fontFamily="sans-serif"
-            fontWeight="600"
-            fontSize="15"
-          >
-            {t}
-          </text>
-          <text
-            x="50"
-            y={STRING_Y(s) + 4}
-            fill="#656861"
-            fontFamily="sans-serif"
-            fontSize="10"
-          >
-            {s + 1}
-          </text>
           <line
             x1="75"
             x2={width - 16}
@@ -137,7 +117,38 @@ export function Board({
           />
         </g>
       ))}
+      <StringLabels tuning={tuning} />
       {children}
+    </>
+  );
+}
+export function StringLabels({ tuning }: { tuning: string[] }) {
+  return (
+    <>
+      {tuning.map((t, s) => (
+        <g key={s}>
+          <text
+            x="27"
+            y={STRING_Y(s) + 5}
+            textAnchor="middle"
+            fill="#d0d0ca"
+            fontFamily="sans-serif"
+            fontWeight="600"
+            fontSize="15"
+          >
+            {t}
+          </text>
+          <text
+            x="50"
+            y={STRING_Y(s) + 4}
+            fill="#656861"
+            fontFamily="sans-serif"
+            fontSize="10"
+          >
+            {s + 1}
+          </text>
+        </g>
+      ))}
     </>
   );
 }

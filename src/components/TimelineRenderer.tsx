@@ -6,6 +6,7 @@ import {
   HEIGHT,
   Marker,
   STRING_Y,
+  StringLabels,
   fretPosition,
   physicalNotes,
 } from "./FretboardRenderer";
@@ -98,6 +99,18 @@ export const TimelineRenderer = forwardRef<SVGSVGElement, Props>(
     const radius = Math.min(prefs.markerSize, cell * 0.36);
     return (
       <div className="board-scroll" ref={scroll}>
+        {!exportOnly && (
+          <svg
+            className="fixed-string-labels"
+            aria-hidden="true"
+            viewBox={`0 0 74 ${HEIGHT}`}
+            width="74"
+            height={HEIGHT}
+          >
+            <rect width="74" height={HEIGHT} fill="#111211" />
+            <StringLabels tuning={model.tuning} />
+          </svg>
+        )}
         <svg
           ref={ref}
           aria-label={isTimeline ? "Secuencia de tablatura" : "Mástil físico"}

@@ -2089,3 +2089,21 @@ h2 span {
     min-height: 360px;
   }
 }
+
+/* Las etiquetas comparten la altura del SVG y permanecen en el borde del visor. */
+.board-scroll {
+  display: grid;
+  grid-template-columns: max-content;
+}
+.board-scroll > svg {
+  grid-area: 1 / 1;
+}
+.board-scroll > .fixed-string-labels {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 74px;
+  min-width: 74px;
+  justify-self: start;
+  pointer-events: none;
+}

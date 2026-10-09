@@ -171,9 +171,13 @@ export function Marker({
   const tech = note.techniques
     .map((t) =>
       t.kind === "bend"
-        ? `↗ ${t.target ?? "?"}`
+        ? t.target === undefined
+          ? "↗"
+          : `↗ ${t.target}`
         : t.kind === "release"
-          ? `↘ ${t.target ?? "?"}`
+          ? t.target === undefined
+            ? "↘"
+            : `↘ ${t.target}`
           : t.kind === "vibrato"
             ? "≈"
             : t.kind === "hammer"

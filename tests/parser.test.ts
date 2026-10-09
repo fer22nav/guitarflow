@@ -192,3 +192,90 @@ it("no ejecuta automáticamente cantidades contradictorias", () => {
   expect(m.repeats).toHaveLength(0);
   expect(m.diagnostics.some((d) => d.message.includes("ambigua"))).toBe(true);
 });
+
+it("conserva cada ataque compacto alineado sin romper trastes de dos dígitos", () => {
+  const model = parseTab(
+    tab("---10---11---22---", [
+      "------------------",
+      "------------------",
+      "------------------",
+      "---8888-8---------",
+      "---6666-6---------",
+    ]),
+  );
+  const chords = model.events.filter((event) =>
+    event.notes.some((note) => note.string === 4),
+  );
+  expect(chords.map((event) => event.column)).toEqual([3, 4, 5, 6, 8]);
+  expect(
+    chords.map((event) =>
+      event.notes.filter((note) => note.string >= 4).map((note) => note.fret),
+    ),
+  ).toEqual(Array(5).fill([8, 6]));
+  expect(
+    model.events
+      .flatMap((event) => event.notes)
+      .filter((note) => note.string === 0)
+      .map((note) => note.fret),
+  ).toEqual([10, 11, 22]);
+  expect(model.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+  expect(
+    parseTab(tab("--0000--")).events.map((event) => event.notes[0].fret),
+  ).toEqual([0, 0, 0, 0]);
+});
+it("reconoce bends con circunflejo sin inventar el destino ni el origen de un slide de entrada", () => {
+  const model = parseTab(tab("--9^--\\12^--"));
+  expect(model.events.map((event) => event.notes[0].fret)).toEqual([9, 12]);
+  expect(model.events.map((event) => event.notes[0].techniques)).toEqual([
+    [{ kind: "bend" }],
+    [{ kind: "bend" }],
+  ]);
+  expect(
+    model.diagnostics.some((d) => d.message.includes("Slide de entrada")),
+  ).toBe(true);
+  expect(model.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+});
+it("mantiene ambiguas las cadenas mezcladas de números en lugar de inventar notas", () => {
+  const model = parseTab(tab("--1234--99--"));
+  expect(model.events).toEqual([]);
+  expect(model.diagnostics.some((d) => d.severity === "error")).toBe(true);
+});
+it("interpreta el solo y outro provistos con acordes compactos", () => {
+  const model = parseTab(String.raw`Solo: [Wah]
+|----------7-------------7---------------|
+|---7-8-10---10-8-7-8-10---10-8-7-8------|
+|-----------------------------------9^---|
+|----------------------------------------|
+|----------------------------------------|
+|----------------------------------------|
+
+|----------7-------------7------------------|
+|---7-8-10---10-8-7-8-10---10-8-7-8--\12^---|
+|-------------------------------------------|
+|-------------------------------------------|
+|-------------------------------------------|
+|-------------------------------------------|
+
+Outro:
+|------------------------------|
+|------------------------------|
+|------------------------------|
+|---2-----5-----7----------8---|
+|---2-----5-----7-----8888-8---|
+|---0-----3-----5-----6666-6---|
+                      ....`);
+  expect(model.blocks).toHaveLength(3);
+  expect(model.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+  const outro = model.events.filter((event) => event.block === 2);
+  expect(outro).toHaveLength(8);
+  expect(
+    outro.filter((event) =>
+      event.notes.some((note) => note.string === 4 && note.fret === 8),
+    ),
+  ).toHaveLength(5);
+  expect(
+    model.events
+      .flatMap((event) => event.notes)
+      .filter((note) => note.techniques.some((t) => t.kind === "bend")),
+  ).toHaveLength(2);
+});

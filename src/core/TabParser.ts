@@ -107,6 +107,7 @@ export function parseTab(
         "",
       );
       let i = 0;
+      let repeatedDigitEnd = -1;
       let previous: Note | undefined;
       let pending: Technique | undefined;
       while (i < body.length) {
@@ -114,7 +115,11 @@ export function parseTab(
         if (/[\d]/.test(c) || c.toLowerCase() === "x") {
           const begin = i;
           const m = body.slice(i).match(/^(\d+|[xX])/)!;
-          const raw = m[0];
+          // Compact repeated single-digit frets (8888) retain one event per column.
+          // One/two-digit tokens remain intact: 10, 11 and 22 are real frets.
+          if (/^(\d)\1{2,}$/.test(m[0]))
+            repeatedDigitEnd = Math.max(repeatedDigitEnd, i + m[0].length);
+          const raw = i < repeatedDigitEnd ? c : m[0];
           i += raw.length;
           const fret = /x/i.test(raw) ? null : Number(raw);
           if (fret !== null && fret > 24) {
@@ -142,6 +147,14 @@ export function parseTab(
           }
           put(begin, n);
           previous = n;
+          continue;
+        }
+        if (c === "^") {
+          if (previous) {
+            previous.techniques.push({ kind: "bend" });
+            previous.source.raw += c;
+          } else warn(row.line, "Bend sin nota de origen.");
+          i++;
           continue;
         }
         if (c === "~" || c === "v") {
@@ -183,6 +196,15 @@ export function parseTab(
         if (kinds[c]) {
           if (previous && /^\d/.test(body.slice(i + 1)))
             pending = { kind: kinds[c] };
+          else if (
+            !previous &&
+            (c === "/" || c === "\\") &&
+            /^\d/.test(body.slice(i + 1))
+          )
+            warn(
+              row.line,
+              "Slide de entrada: el traste de origen no está indicado; se conserva solamente la nota de llegada.",
+            );
           else warn(row.line, `Técnica «${c}» sin dos trastes explícitos.`);
           i++;
           continue;
